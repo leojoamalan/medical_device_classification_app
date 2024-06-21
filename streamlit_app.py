@@ -1,110 +1,146 @@
-import streamlit as st 
+import streamlit as st
+import cv2
+import easyocr
+import numpy as np
 import pandas as pd
+import os
+from io import BytesIO
+import base64
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.inception_v3 import preprocess_input
 
-st.balloons()
-st.markdown("# Data Evaluation App")
+# Load the model
+model = load_model('device1.h5')
 
-st.write("We are so glad to see you here. ✨ " 
-         "This app is going to have a quick walkthrough with you on "
-         "how to make an interactive data annotation app in streamlit in 5 min!")
+# Define the classes
+classes = ['blood pressure set', 'breast pump', 'commode', 'crutch',
+           'glucometer', 'oximeter', 'rippled mattress',
+           'therapeutic ultrasound machine', 'thermometer']
 
-st.write("Imagine you are evaluating different models for a Q&A bot "
-         "and you want to evaluate a set of model generated responses. "
-        "You have collected some user data. "
-         "Here is a sample question and response set.")
+# Initialize or load the data DataFrame
+data = pd.DataFrame(columns=classes)
 
-data = {
-    "Questions": 
-        ["Who invented the internet?"
-        , "What causes the Northern Lights?"
-        , "Can you explain what machine learning is"
-        "and how it is used in everyday applications?"
-        , "How do penguins fly?"
-    ],           
-    "Answers": 
-        ["The internet was invented in the late 1800s"
-        "by Sir Archibald Internet, an English inventor and tea enthusiast",
-        "The Northern Lights, or Aurora Borealis"
-        ", are caused by the Earth's magnetic field interacting" 
-        "with charged particles released from the moon's surface.",
-        "Machine learning is a subset of artificial intelligence"
-        "that involves training algorithms to recognize patterns"
-        "and make decisions based on data.",
-        " Penguins are unique among birds because they can fly underwater. "
-        "Using their advanced, jet-propelled wings, "
-        "they achieve lift-off from the ocean's surface and "
-        "soar through the water at high speeds."
-    ]
-}
+# Load or create the all_device_values DataFrame
+file_path = "all_device_values.csv"
+if os.path.exists(file_path):
+    all_device_values = pd.read_csv(file_path)
+else:
+    all_device_values = pd.DataFrame(columns=['Image'] + classes)
 
-df = pd.DataFrame(data)
+def classify_device(image_rgb):
+    def preprocess_image(img):
+        img = cv2.resize(img, (299, 299))
+        img = np.expand_dims(img, axis=0)
+        img = preprocess_input(img)
+        return img
 
-st.write(df)
+    processed_img = preprocess_image(image_rgb)
+    predictions = model.predict(processed_img)
+    predicted_class_index = np.argmax(predictions)
+    return classes[predicted_class_index]
 
-st.write("Now I want to evaluate the responses from my model. "
-         "One way to achieve this is to use the very powerful `st.data_editor` feature. "
-         "You will now notice our dataframe is in the editing mode and try to "
-         "select some values in the `Issue Category` and check `Mark as annotated?` once finished 👇")
+def preprocess_and_extract(image_path):
+    reader = easyocr.Reader(['en'])
+    image = cv2.imread(image_path)
+    if image is None:
+        st.error(f"Unable to read image from path: {image_path}")
+        return [], None
 
-df["Issue"] = [True, True, True, False]
-df['Category'] = ["Accuracy", "Accuracy", "Completeness", ""]
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    gray = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2GRAY)
 
-new_df = st.data_editor(
-    df,
-    column_config = {
-        "Questions":st.column_config.TextColumn(
-            width = "medium",
-            disabled=True
-        ),
-        "Answers":st.column_config.TextColumn(
-            width = "medium",
-            disabled=True
-        ),
-        "Issue":st.column_config.CheckboxColumn(
-            "Mark as annotated?",
-            default = False
-        ),
-        "Category":st.column_config.SelectboxColumn
-        (
-        "Issue Category",
-        help = "select the category",
-        options = ['Accuracy', 'Relevance', 'Coherence', 'Bias', 'Completeness'],
-        required = False
-        )
-    }
-)
+    kernel_sharpening = np.array([[-1, -1, -1],
+                                  [-1,  9, -1],
+                                  [-1, -1, -1]])
 
-st.write("You will notice that we changed our dataframe and added new data. "
-         "Now it is time to visualize what we have annotated!")
+    sharpened = cv2.filter2D(gray, -1, kernel_sharpening)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(sharpened)
+    _, thresh = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-st.divider()
+    glucose_values = []
+    device_type = None
 
-st.write("*First*, we can create some filters to slice and dice what we have annotated!")
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        aspect_ratio = w / float(h)
+        area = cv2.contourArea(contour)
 
-col1, col2 = st.columns([1,1])
-with col1:
-    issue_filter = st.selectbox("Issues or Non-issues", options = new_df.Issue.unique())
-with col2:
-    category_filter = st.selectbox("Choose a category", options  = new_df[new_df["Issue"]==issue_filter].Category.unique())
+        if 0.5 < aspect_ratio < 2.0 and area > 1000:
+            roi = image_rgb[y:y+h, x:x+w]
+            results = reader.readtext(roi)
 
-st.dataframe(new_df[(new_df['Issue'] == issue_filter) & (new_df['Category'] == category_filter)])
+            for (box, text, prob) in results:
+                numeric_text = ''.join(c for c in text if c.isdigit() or c == '.')
+                try:
+                    value = float(numeric_text)
+                    if 20 <= value <= 600:
+                        if device_type is None:
+                            device_type = classify_device(roi)
+                        glucose_values.append(value)
+                        break
+                except ValueError:
+                    continue
 
-st.markdown("")
-st.write("*Next*, we can visualize our data quickly using `st.metrics` and `st.bar_plot`")
+    return glucose_values, device_type
 
-issue_cnt = len(new_df[new_df['Issue']==True])
-total_cnt = len(new_df)
-issue_perc = f"{issue_cnt/total_cnt*100:.0f}%"
+def main():
+    st.title('Healthcare Device Data Extractor')
+    st.write('Upload an image of a healthcare device (e.g., glucometer, oximeter) to extract the relevant values.')
 
-col1, col2 = st.columns([1,1])
-with col1:
-    st.metric("Number of responses",issue_cnt)
-with col2:
-    st.metric("Annotation Progress", issue_perc)
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
+    
+    if uploaded_file is not None:
+        temp_image_path = "temp_image.jpg"
+        with open(temp_image_path, "wb") as f:
+            f.write(uploaded_file.read())
+        glucose_values, device_type = preprocess_and_extract(temp_image_path)
+        
+        if glucose_values and device_type:
+            st.write("### Detected Values:")
+            for value in glucose_values:
+                st.write(f"Device: {device_type}, Value: {value}")
+                new_row = {'Image': uploaded_file.name, **{device_type: value}}
+                all_device_values.loc[len(all_device_values)] = new_row
 
-df_plot = new_df[new_df['Category']!=''].Category.value_counts().reset_index()
+            st.write(all_device_values)
+            save_glucose_data()
+        else:
+            st.error("Unable to detect values. Please try again with a clearer image or a different angle.")
 
-st.bar_chart(df_plot, x = 'Category', y = 'count')
+        try:
+            os.remove(temp_image_path)
+        except Exception as e:
+            st.warning(f"Failed to delete temporary file {temp_image_path}: {e}")
 
-st.write("Here we are at the end of getting started with streamlit! Happy Streamlit-ing! :balloon:")
+        if st.button("Download All Device Values as CSV"):
+            download_csv()
 
+        if st.button("Clear All Data"):
+            clear_data()
+
+def save_glucose_data():
+    file_path = "all_device_values.csv"
+    all_device_values.to_csv(file_path, index=False)
+
+def download_csv():
+    file_path = "all_device_values.csv"
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as f:
+            csv_data = f.read()
+        b64 = base64.b64encode(csv_data).decode('utf-8')
+        href = f'<a href="data:file/csv;base64,{b64}" download="all_device_values.csv">Download All Device Values CSV File</a>'
+        st.markdown(href, unsafe_allow_html=True)
+    else:
+        st.warning("No values detected yet.")
+
+def clear_data():
+    global all_device_values
+    all_device_values = pd.DataFrame(columns=['Image'] + classes)
+    save_glucose_data()
+    st.success("All data cleared successfully.")
+
+if __name__ == "__main__":
+    main()
