@@ -115,9 +115,10 @@ def main():
         
         if glucose_values and device_type:
             st.write("### Detected Values:")
-            st.write(f"Device: {result['predicted_classes'][0]}, Value: {glucose_values}")
-            new_row = {'Image': uploaded_file.name, **{device_type: glucose_values}}
-            all_device_values.loc[len(all_device_values)] = new_row
+           for value in glucose_values:
+                       st.write(f"Device: {result['predicted_classes'][0]}, Value: {value}")
+                       new_row = {'Image': uploaded_file.name, **{device_type:value}}
+                       all_device_values.loc[len(all_device_values)] = new_row
 
             st.write(all_device_values)
             save_glucose_data()
