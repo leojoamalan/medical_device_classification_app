@@ -178,7 +178,7 @@ import gc
 #            'glucometer', 'oximeter', 'rippled mattress',
 #            'therapeutic ultrasound machine', 'thermometer']
  
-data = pd.DataFrame(columns=classes)
+# data = pd.DataFrame(columns=classes)
  
 # Load or create the all_device_values DataFrame
 file_path = "all_device_values.csv"
