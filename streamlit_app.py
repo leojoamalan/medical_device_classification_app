@@ -36,7 +36,7 @@ def classify_device(image_path):
     api_url="https://detect.roboflow.com",
     api_key="EJSq61e3dlQXnJ0sOCAA"
 )
-    result = result = CLIENT.infer(image, model_id="medical_device_classification/1")
+    result = result = CLIENT.infer(image, model_id="medical_device_classification/2")
     # predictions = model.predict(processed_img)
     # predicted_class_index = np.argmax(predictions)
     return result['predicted_classes']
