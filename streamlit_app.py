@@ -9,7 +9,7 @@ import base64
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.inception_v3 import preprocess_input
-
+import PIL
 # Load the model
 # model = load_model('device1.h5')
 
@@ -108,7 +108,8 @@ def main():
         temp_image_path = "temp_image.jpg"
         with open(temp_image_path, "wb") as f:
             f.write(uploaded_file.read())
-        result = CLIENT.infer("uploaded_file", model_id="medical_device_classification/2")
+        image = Image.open(uploaded_file)
+        result = CLIENT.infer(image, model_id="medical_device_classification/2")
         glucose_values, device_type = preprocess_and_extract(temp_image_path)
         
         if glucose_values and device_type:
