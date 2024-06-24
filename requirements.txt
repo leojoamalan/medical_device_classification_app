@@ -10,3 +10,5 @@ super-gradients
 requests
 inference-sdk
 easyocr
+pybase64
+Python-IO
