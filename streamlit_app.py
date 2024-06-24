@@ -49,7 +49,6 @@ CLIENT = InferenceHTTPClient(
 )
 
 # infer on a local image
-result = CLIENT.infer("YOUR_IMAGE.jpg", model_id="medical_device_classification/2")
 
 
 
@@ -110,7 +109,8 @@ def main():
         with open(temp_image_path, "wb") as f:
             f.write(uploaded_file.read())
         glucose_values, device_type = preprocess_and_extract(temp_image_path)
-        
+        result = CLIENT.infer("uploaded_file", model_id="medical_device_classification/2")
+
         if glucose_values and device_type:
             st.write("### Detected Values:")
             for value in glucose_values:
