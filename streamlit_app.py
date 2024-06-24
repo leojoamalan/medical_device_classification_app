@@ -45,7 +45,7 @@ from inference_sdk import InferenceHTTPClient
 # initialize the client
 CLIENT = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
-    api_key="kAbNHf7BK7n4dF8MzsMh"
+    api_key="EJSq61e3dlQXnJ0sOCAA"
 )
 
 # infer on a local image
