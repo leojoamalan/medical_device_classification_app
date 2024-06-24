@@ -30,23 +30,16 @@ if os.path.exists(file_path):
 else:
     all_device_values = pd.DataFrame(columns=['Image'] + classes)
 
-def classify_device(image_rgb):
-    def preprocess_image(img):
-        img = cv2.resize(img, (640, 640))
-        img = np.expand_dims(img, axis=0)
-        img = preprocess_input(img)
-        return img
+def classify_device(image_path):
+    image = Image.open(image_path)
     CLIENT = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
     api_key="EJSq61e3dlQXnJ0sOCAA"
 )
-    
-
-    processed_img = preprocess_image(image_rgb)
-    result = result = CLIENT.infer(processed_img, model_id="medical_device_classification/2")
+    result = result = CLIENT.infer(image, model_id="medical_device_classification/2")
     # predictions = model.predict(processed_img)
     # predicted_class_index = np.argmax(predictions)
-    return classes[predicted_class_index]
+    return result['predicted_classes']
 
 # initialize the client
 CLIENT = InferenceHTTPClient(
@@ -96,7 +89,7 @@ def preprocess_and_extract(image_path):
                     value = float(numeric_text)
                     if 20 <= value <= 600:
                         if device_type is None:
-                            device_type = classify_device(roi)
+                            device_type = classify_device(image_path)
                         glucose_values.append(value)
                         break
                 except ValueError:
