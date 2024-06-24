@@ -174,9 +174,9 @@ import gc
 #     return load_model('device1.h5')
  
 # Initialize or load the data DataFrame
-classes = ['blood pressure set', 'breast pump', 'commode', 'crutch',
-           'glucometer', 'oximeter', 'rippled mattress',
-           'therapeutic ultrasound machine', 'thermometer']
+# classes = ['blood pressure set', 'breast pump', 'commode', 'crutch',
+#            'glucometer', 'oximeter', 'rippled mattress',
+#            'therapeutic ultrasound machine', 'thermometer']
  
 data = pd.DataFrame(columns=classes)
  
