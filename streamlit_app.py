@@ -91,7 +91,7 @@ def preprocess_and_extract(image_path):
                     value = float(numeric_text)
                     if 20 <= value <= 600:
                         if device_type is None:
-                            device_type = result['predicted_classes'][0]
+                            device_type = result['predicted_classes']
                         glucose_values.append(value)
                         break
                 except ValueError:
