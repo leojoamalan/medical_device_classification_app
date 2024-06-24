@@ -10,3 +10,4 @@ easyocr
 pybase64
 Python-IO
 pillow
+scikit-learn
