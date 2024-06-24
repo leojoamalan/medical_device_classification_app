@@ -1,7 +1,11 @@
-streamlit==1.26.0
-opencv-python
-easyocr
-matplotlib
-numpy 
+streamlit
 pandas
+torch
+torchvision
 tensorflow
+numpy
+matplotlib
+opencv-python
+super-gradients
+requests
+inference-sdk
