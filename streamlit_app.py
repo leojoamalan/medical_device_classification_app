@@ -43,7 +43,7 @@ def classify_device(image_rgb):
     
 
     processed_img = preprocess_image(image_rgb)
-    result = result = CLIENT.infer(processes_img, model_id="medical_device_classification/2")
+    result = result = CLIENT.infer(processed_img, model_id="medical_device_classification/2")
     # predictions = model.predict(processed_img)
     # predicted_class_index = np.argmax(predictions)
     return classes[predicted_class_index]
