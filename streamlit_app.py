@@ -113,7 +113,7 @@ def main():
             st.write("### Detected Values:")
             for value in glucose_values:
                 st.write(f"Device: {device_type}, Value: {value}")
-                new_row = {'Image': uploaded_file.name, **{device_type: value}}
+                new_row = {'Image': uploaded_file.name, **{device_type[0]: value}}
                 all_device_values.loc[len(all_device_values)] = new_row
 
             st.write(all_device_values)
