@@ -5,6 +5,7 @@ torchvision
 tensorflow
 numpy
 matplotlib
+opencv-contrib-python
 opencv-python
 super-gradients
 requests
