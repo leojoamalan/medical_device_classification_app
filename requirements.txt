@@ -12,3 +12,4 @@ inference-sdk
 easyocr
 pybase64
 Python-IO
+pillow
