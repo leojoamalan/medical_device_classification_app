@@ -9,3 +9,4 @@ opencv-python
 super-gradients
 requests
 inference-sdk
+easyocr
