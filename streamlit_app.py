@@ -90,7 +90,7 @@ def preprocess_and_extract(image_path):
                     value = float(numeric_text)
                     if 20 <= value <= 600:
                         if device_type is None:
-                            device_type = classify_device(roi)
+                            device_type = result['predicted_classes'][0]
                         glucose_values.append(value)
                         break
                 except ValueError:
@@ -108,9 +108,9 @@ def main():
         temp_image_path = "temp_image.jpg"
         with open(temp_image_path, "wb") as f:
             f.write(uploaded_file.read())
-        glucose_values, device_type = preprocess_and_extract(temp_image_path)
         result = CLIENT.infer("uploaded_file", model_id="medical_device_classification/2")
-
+        glucose_values, device_type = preprocess_and_extract(temp_image_path)
+        
         if glucose_values and device_type:
             st.write("### Detected Values:")
             for value in glucose_values:
