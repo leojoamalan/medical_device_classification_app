@@ -11,7 +11,7 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.inception_v3 import preprocess_input
 
 # Load the model
-model = load_model('device1.h5')
+# model = load_model('device1.h5')
 
 # Define the classes
 classes = ['blood pressure set', 'breast pump', 'commode', 'crutch',
@@ -28,17 +28,30 @@ if os.path.exists(file_path):
 else:
     all_device_values = pd.DataFrame(columns=['Image'] + classes)
 
-def classify_device(image_rgb):
-    def preprocess_image(img):
-        img = cv2.resize(img, (299, 299))
-        img = np.expand_dims(img, axis=0)
-        img = preprocess_input(img)
-        return img
+# def classify_device(image_rgb):
+#     def preprocess_image(img):
+#         img = cv2.resize(img, (299, 299))
+#         img = np.expand_dims(img, axis=0)
+#         img = preprocess_input(img)
+#         return img
 
-    processed_img = preprocess_image(image_rgb)
-    predictions = model.predict(processed_img)
-    predicted_class_index = np.argmax(predictions)
-    return classes[predicted_class_index]
+#     processed_img = preprocess_image(image_rgb)
+#     predictions = model.predict(processed_img)
+#     predicted_class_index = np.argmax(predictions)
+#     return classes[predicted_class_index]
+# import the inference-sdk
+from inference_sdk import InferenceHTTPClient
+
+# initialize the client
+CLIENT = InferenceHTTPClient(
+    api_url="https://detect.roboflow.com",
+    api_key="EJSq61e3dlQXnJ0sOCAA"
+)
+
+# infer on a local image
+result = CLIENT.infer("YOUR_IMAGE.jpg", model_id="medical_device_classification/2")
+
+
 
 def preprocess_and_extract(image_path):
     reader = easyocr.Reader(['en'])
