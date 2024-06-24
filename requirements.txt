@@ -4,7 +4,6 @@ tensorflow
 numpy
 matplotlib
 opencv-contrib-python
-opencv-python
 requests
 inference-sdk
 easyocr
